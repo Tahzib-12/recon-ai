@@ -1,0 +1,124 @@
+transaction_id,scenario,expected_outcome,expected_settlement_id,expected_refund_id,notes
+TXN000001,PERFECT_MATCH,MATCHED,SET000001,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000002,PERFECT_MATCH,MATCHED,SET000002,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000003,PERFECT_MATCH,MATCHED,SET000003,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000004,PERFECT_MATCH,MATCHED,SET000004,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000005,PERFECT_MATCH,MATCHED,SET000005,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000006,PERFECT_MATCH,MATCHED,SET000006,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000007,PERFECT_MATCH,MATCHED,SET000007,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000008,PERFECT_MATCH,MATCHED,SET000008,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000009,PERFECT_MATCH,MATCHED,SET000009,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000010,PERFECT_MATCH,MATCHED,SET000010,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000011,PERFECT_MATCH,MATCHED,SET000011,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000012,PERFECT_MATCH,MATCHED,SET000012,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000013,PERFECT_MATCH,MATCHED,SET000013,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000014,PERFECT_MATCH,MATCHED,SET000014,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000015,PERFECT_MATCH,MATCHED,SET000015,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000016,PERFECT_MATCH,MATCHED,SET000016,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000017,PERFECT_MATCH,MATCHED,SET000017,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000018,PERFECT_MATCH,MATCHED,SET000018,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000019,PERFECT_MATCH,MATCHED,SET000019,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000020,PERFECT_MATCH,MATCHED,SET000020,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000021,PERFECT_MATCH,MATCHED,SET000021,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000022,PERFECT_MATCH,MATCHED,SET000022,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000023,PERFECT_MATCH,MATCHED,SET000023,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000024,PERFECT_MATCH,MATCHED,SET000024,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000025,PERFECT_MATCH,MATCHED,SET000025,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000026,PERFECT_MATCH,MATCHED,SET000026,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000027,PERFECT_MATCH,MATCHED,SET000027,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000028,PERFECT_MATCH,MATCHED,SET000028,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000029,PERFECT_MATCH,MATCHED,SET000029,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000030,PERFECT_MATCH,MATCHED,SET000030,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000031,PERFECT_MATCH,MATCHED,SET000031,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000032,PERFECT_MATCH,MATCHED,SET000032,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000033,PERFECT_MATCH,MATCHED,SET000033,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000034,PERFECT_MATCH,MATCHED,SET000034,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000035,PERFECT_MATCH,MATCHED,SET000035,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000036,PERFECT_MATCH,MATCHED,SET000036,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000037,PERFECT_MATCH,MATCHED,SET000037,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000038,PERFECT_MATCH,MATCHED,SET000038,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000039,PERFECT_MATCH,MATCHED,SET000039,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000040,PERFECT_MATCH,MATCHED,SET000040,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000041,PERFECT_MATCH,MATCHED,SET000041,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000042,PERFECT_MATCH,MATCHED,SET000042,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000043,PERFECT_MATCH,MATCHED,SET000043,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000044,PERFECT_MATCH,MATCHED,SET000044,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000045,PERFECT_MATCH,MATCHED,SET000045,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000046,PERFECT_MATCH,MATCHED,SET000046,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000047,PERFECT_MATCH,MATCHED,SET000047,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000048,PERFECT_MATCH,MATCHED,SET000048,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000049,PERFECT_MATCH,MATCHED,SET000049,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000050,PERFECT_MATCH,MATCHED,SET000050,NONE,"Exact match on ID, merchant, currency, and amount within standard settlement window."
+TXN000051,FEE_DISCREPANCY,AMOUNT_MISMATCH,SET000051,NONE,Synthetic MDR fee deduction (3.00%): ₹1000.00 -> ₹970.00 (Fee: ₹30.00).
+TXN000052,FEE_DISCREPANCY,AMOUNT_MISMATCH,SET000052,NONE,Synthetic MDR fee deduction (2.900%): ₹8000.00 -> ₹7768.00 (Fee: ₹232.00).
+TXN000053,FEE_DISCREPANCY,AMOUNT_MISMATCH,SET000053,NONE,Synthetic MDR fee deduction (3.00%): ₹2500.00 -> ₹2425.00 (Fee: ₹75.00).
+TXN000054,FEE_DISCREPANCY,AMOUNT_MISMATCH,SET000054,NONE,Synthetic MDR fee deduction (2.900%): ₹5000.00 -> ₹4855.00 (Fee: ₹145.00).
+TXN000055,FEE_DISCREPANCY,AMOUNT_MISMATCH,SET000055,NONE,Synthetic MDR fee deduction (2.00%): ₹1000.00 -> ₹980.00 (Fee: ₹20.00).
+TXN000056,FEE_DISCREPANCY,AMOUNT_MISMATCH,SET000056,NONE,Synthetic MDR fee deduction (2.00%): ₹1000.00 -> ₹980.00 (Fee: ₹20.00).
+TXN000057,FEE_DISCREPANCY,AMOUNT_MISMATCH,SET000057,NONE,Synthetic MDR fee deduction (2.00%): ₹10000.00 -> ₹9800.00 (Fee: ₹200.00).
+TXN000058,FEE_DISCREPANCY,AMOUNT_MISMATCH,SET000058,NONE,Synthetic MDR fee deduction (3.00%): ₹1000.00 -> ₹970.00 (Fee: ₹30.00).
+TXN000059,FEE_DISCREPANCY,AMOUNT_MISMATCH,SET000059,NONE,Synthetic MDR fee deduction (2.900%): ₹2500.00 -> ₹2427.50 (Fee: ₹72.50).
+TXN000060,FEE_DISCREPANCY,AMOUNT_MISMATCH,SET000060,NONE,Synthetic MDR fee deduction (2.00%): ₹5000.00 -> ₹4900.00 (Fee: ₹100.00).
+TXN000061,MISSING_TRANSACTION_ID,CANDIDATE_MATCH,SET000061,NONE,"Settlement has no transaction_id; candidate match must be determined via merchant, amount, and timestamp."
+TXN000062,MISSING_TRANSACTION_ID,CANDIDATE_MATCH,SET000062,NONE,"Settlement has no transaction_id; candidate match must be determined via merchant, amount, and timestamp."
+TXN000063,MISSING_TRANSACTION_ID,CANDIDATE_MATCH,SET000063,NONE,"Settlement has no transaction_id; candidate match must be determined via merchant, amount, and timestamp."
+TXN000064,MISSING_TRANSACTION_ID,CANDIDATE_MATCH,SET000064,NONE,"Settlement has no transaction_id; candidate match must be determined via merchant, amount, and timestamp."
+TXN000065,MISSING_TRANSACTION_ID,CANDIDATE_MATCH,SET000065,NONE,"Settlement has no transaction_id; candidate match must be determined via merchant, amount, and timestamp."
+TXN000066,MISSING_TRANSACTION_ID,CANDIDATE_MATCH,SET000066,NONE,"Settlement has no transaction_id; candidate match must be determined via merchant, amount, and timestamp."
+TXN000067,MISSING_TRANSACTION_ID,CANDIDATE_MATCH,SET000067,NONE,"Settlement has no transaction_id; candidate match must be determined via merchant, amount, and timestamp."
+TXN000068,MISSING_TRANSACTION_ID,CANDIDATE_MATCH,SET000068,NONE,"Settlement has no transaction_id; candidate match must be determined via merchant, amount, and timestamp."
+TXN000069,MISSING_SETTLEMENT,MISSING_SETTLEMENT,NONE,NONE,Payment succeeded internally but no settlement record exists in the settlement batch.
+TXN000070,MISSING_SETTLEMENT,MISSING_SETTLEMENT,NONE,NONE,Payment succeeded internally but no settlement record exists in the settlement batch.
+TXN000071,MISSING_SETTLEMENT,MISSING_SETTLEMENT,NONE,NONE,Payment succeeded internally but no settlement record exists in the settlement batch.
+TXN000072,MISSING_SETTLEMENT,MISSING_SETTLEMENT,NONE,NONE,Payment succeeded internally but no settlement record exists in the settlement batch.
+TXN000073,MISSING_SETTLEMENT,MISSING_SETTLEMENT,NONE,NONE,Payment succeeded internally but no settlement record exists in the settlement batch.
+TXN000074,MISSING_SETTLEMENT,MISSING_SETTLEMENT,NONE,NONE,Payment succeeded internally but no settlement record exists in the settlement batch.
+TXN000075,MISSING_SETTLEMENT,MISSING_SETTLEMENT,NONE,NONE,Payment succeeded internally but no settlement record exists in the settlement batch.
+TXN000076,MISSING_SETTLEMENT,MISSING_SETTLEMENT,NONE,NONE,Payment succeeded internally but no settlement record exists in the settlement batch.
+TXN_UNKNOWN_954496,ORPHAN_SETTLEMENT,ORPHAN_SETTLEMENT,SET000069,NONE,Settlement record received from bank with no corresponding internal payment record.
+TXN_UNKNOWN_975456,ORPHAN_SETTLEMENT,ORPHAN_SETTLEMENT,SET000070,NONE,Settlement record received from bank with no corresponding internal payment record.
+TXN_UNKNOWN_954921,ORPHAN_SETTLEMENT,ORPHAN_SETTLEMENT,SET000071,NONE,Settlement record received from bank with no corresponding internal payment record.
+TXN_UNKNOWN_963993,ORPHAN_SETTLEMENT,ORPHAN_SETTLEMENT,SET000072,NONE,Settlement record received from bank with no corresponding internal payment record.
+TXN_UNKNOWN_944057,ORPHAN_SETTLEMENT,ORPHAN_SETTLEMENT,SET000073,NONE,Settlement record received from bank with no corresponding internal payment record.
+TXN000077,DELAYED_SETTLEMENT,DELAYED_SETTLEMENT,SET000074,NONE,Settlement arrived 6 days after payment (exceeds standard T+2 window).
+TXN000078,DELAYED_SETTLEMENT,DELAYED_SETTLEMENT,SET000075,NONE,Settlement arrived 8 days after payment (exceeds standard T+2 window).
+TXN000079,DELAYED_SETTLEMENT,DELAYED_SETTLEMENT,SET000076,NONE,Settlement arrived 13 days after payment (exceeds standard T+2 window).
+TXN000080,DELAYED_SETTLEMENT,DELAYED_SETTLEMENT,SET000077,NONE,Settlement arrived 10 days after payment (exceeds standard T+2 window).
+TXN000081,DELAYED_SETTLEMENT,DELAYED_SETTLEMENT,SET000078,NONE,Settlement arrived 9 days after payment (exceeds standard T+2 window).
+TXN000082,DELAYED_SETTLEMENT,DELAYED_SETTLEMENT,SET000079,NONE,Settlement arrived 6 days after payment (exceeds standard T+2 window).
+TXN000083,PARTIAL_SETTLEMENT,PARTIAL_SETTLEMENT,SET000080,NONE,Partial settlement payout: ₹6000.00 of ₹10000.00.
+TXN000084,PARTIAL_SETTLEMENT,PARTIAL_SETTLEMENT,SET000081,NONE,Partial settlement payout: ₹6000.00 of ₹10000.00.
+TXN000085,PARTIAL_SETTLEMENT,PARTIAL_SETTLEMENT,SET000082,NONE,Partial settlement payout: ₹6000.00 of ₹10000.00.
+TXN000086,PARTIAL_SETTLEMENT,PARTIAL_SETTLEMENT,SET000083,NONE,Partial settlement payout: ₹6000.00 of ₹10000.00.
+TXN000087,PARTIAL_SETTLEMENT,PARTIAL_SETTLEMENT,SET000084,NONE,Partial settlement payout: ₹6000.00 of ₹10000.00.
+TXN000088,DUPLICATE_SETTLEMENT,DUPLICATE_SETTLEMENT,"SET000085,SET000086",NONE,Two distinct settlement records submitted for a single payment transaction.
+TXN000089,DUPLICATE_SETTLEMENT,DUPLICATE_SETTLEMENT,"SET000087,SET000088",NONE,Two distinct settlement records submitted for a single payment transaction.
+TXN000090,DUPLICATE_SETTLEMENT,DUPLICATE_SETTLEMENT,"SET000089,SET000090",NONE,Two distinct settlement records submitted for a single payment transaction.
+TXN000091,DUPLICATE_SETTLEMENT,DUPLICATE_SETTLEMENT,"SET000091,SET000092",NONE,Two distinct settlement records submitted for a single payment transaction.
+TXN000092,DUPLICATE_SETTLEMENT,DUPLICATE_SETTLEMENT,"SET000093,SET000094",NONE,Two distinct settlement records submitted for a single payment transaction.
+TXN000093,FULL_REFUND,FULL_REFUND,SET000095,REF000001,Full refund completed. Complete lifecycle: PAID -> SETTLED -> FULL_REFUND.
+TXN000094,FULL_REFUND,FULL_REFUND,SET000096,REF000002,Full refund completed. Complete lifecycle: PAID -> SETTLED -> FULL_REFUND.
+TXN000095,FULL_REFUND,FULL_REFUND,SET000097,REF000003,Full refund completed. Complete lifecycle: PAID -> SETTLED -> FULL_REFUND.
+TXN000096,FULL_REFUND,FULL_REFUND,SET000098,REF000004,Full refund completed. Complete lifecycle: PAID -> SETTLED -> FULL_REFUND.
+TXN000097,FULL_REFUND,FULL_REFUND,SET000099,REF000005,Full refund completed. Complete lifecycle: PAID -> SETTLED -> FULL_REFUND.
+TXN000098,FULL_REFUND,FULL_REFUND,SET000100,REF000006,Full refund completed. Complete lifecycle: PAID -> SETTLED -> FULL_REFUND.
+TXN000099,PARTIAL_REFUND,PARTIAL_REFUND,SET000101,REF000007,Partial refund of ₹2000.00 on original payment of ₹5000.00.
+TXN000100,PARTIAL_REFUND,PARTIAL_REFUND,SET000102,REF000008,Partial refund of ₹2000.00 on original payment of ₹5000.00.
+TXN000101,PARTIAL_REFUND,PARTIAL_REFUND,SET000103,REF000009,Partial refund of ₹2000.00 on original payment of ₹5000.00.
+TXN000102,PARTIAL_REFUND,PARTIAL_REFUND,SET000104,REF000010,Partial refund of ₹2000.00 on original payment of ₹5000.00.
+TXN000103,PARTIAL_REFUND,PARTIAL_REFUND,SET000105,REF000011,Partial refund of ₹2000.00 on original payment of ₹5000.00.
+TXN000104,PARTIAL_REFUND,PARTIAL_REFUND,SET000106,REF000012,Partial refund of ₹2000.00 on original payment of ₹5000.00.
+TXN000105,ROUNDING_DIFFERENCE,AMOUNT_MISMATCH,SET000107,NONE,Small deterministic rounding difference of ₹-0.01 (₹1000.00 vs ₹999.99).
+TXN000106,ROUNDING_DIFFERENCE,AMOUNT_MISMATCH,SET000108,NONE,Small deterministic rounding difference of ₹0.01 (₹1000.00 vs ₹1000.01).
+TXN000107,ROUNDING_DIFFERENCE,AMOUNT_MISMATCH,SET000109,NONE,Small deterministic rounding difference of ₹-0.01 (₹1000.00 vs ₹999.99).
+TXN000108,ROUNDING_DIFFERENCE,AMOUNT_MISMATCH,SET000110,NONE,Small deterministic rounding difference of ₹-0.01 (₹1000.00 vs ₹999.99).
+TXN000109,ROUNDING_DIFFERENCE,AMOUNT_MISMATCH,SET000111,NONE,Small deterministic rounding difference of ₹-0.01 (₹1000.00 vs ₹999.99).
+TXN000110,ROUNDING_DIFFERENCE,AMOUNT_MISMATCH,SET000112,NONE,Small deterministic rounding difference of ₹-0.01 (₹1000.00 vs ₹999.99).
+TXN000111,AMBIGUOUS_CANDIDATES,AMBIGUOUS,"SET000113,SET000114",NONE,Two equally plausible settlements exist with identical merchant/amount and proximate timestamps.
+TXN000112,AMBIGUOUS_CANDIDATES,AMBIGUOUS,"SET000115,SET000116",NONE,Two equally plausible settlements exist with identical merchant/amount and proximate timestamps.
+TXN000113,AMBIGUOUS_CANDIDATES,AMBIGUOUS,"SET000117,SET000118",NONE,Two equally plausible settlements exist with identical merchant/amount and proximate timestamps.
+TXN000114,AMBIGUOUS_CANDIDATES,AMBIGUOUS,"SET000119,SET000120",NONE,Two equally plausible settlements exist with identical merchant/amount and proximate timestamps.
+TXN000115,UNRESOLVED,UNRESOLVED,NONE,NONE,Insufficient terminal status and no matching settlement records exist.
+TXN000116,UNRESOLVED,UNRESOLVED,NONE,NONE,Insufficient terminal status and no matching settlement records exist.
+TXN000117,UNRESOLVED,UNRESOLVED,NONE,NONE,Insufficient terminal status and no matching settlement records exist.
+TXN000118,UNRESOLVED,UNRESOLVED,NONE,NONE,Insufficient terminal status and no matching settlement records exist.
