@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+from collections.abc import Generator
 
 from app.db.database import Base
 from app.db.models import Payment, Refund, Settlement
@@ -26,7 +27,7 @@ from app.services.ingestion import (
 
 
 @pytest.fixture
-def db_session() -> Session:
+def db_session() -> Generator[Session, None, None]:
     """Provides a clean in-memory SQLite database session for each test."""
     engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
     Base.metadata.create_all(bind=engine)
