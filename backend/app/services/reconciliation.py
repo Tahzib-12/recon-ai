@@ -214,7 +214,7 @@ def reconcile_records(
             )
             continue
 
-        # Level 1: Exact transaction_id matching
+                # Level 1: Exact transaction_id matching
         exact_candidates = settlements_by_tx.get(p.transaction_id, [])
 
         matched_by = MatchedBy.EXACT_TRANSACTION_ID
@@ -240,8 +240,6 @@ def reconcile_records(
                 candidate_scores = decision.ranked_candidates
 
                 if decision.is_ambiguous:
-                    cand_ids = [c.settlement_id for c in decision.ranked_candidates]
-                    matched_settlement_ids.update(cand_ids)  # Claim candidates so reverse scan doesn't treat them as orphans
                     summary.record_item(
                         ReconciliationItem(
                             transaction_id=p.transaction_id,
@@ -250,7 +248,9 @@ def reconcile_records(
                             reason_code=ReasonCode.MULTIPLE_CANDIDATES,
                             matched_by=MatchedBy.NONE,
                             payment_amount=p.amount,
-                            candidate_settlement_ids=cand_ids,
+                            candidate_settlement_ids=[
+                                c.settlement_id for c in decision.ranked_candidates
+                            ],
                             candidate_scores=decision.ranked_candidates,
                             notes=f"Candidate scoring evaluated {len(decision.ranked_candidates)} options: {decision.decision_reason}",
                         )
@@ -262,7 +262,6 @@ def reconcile_records(
                     matched_by = MatchedBy.SCORED_CANDIDATE
                 else:
                     candidates = []
-
         # Missing Settlement Check
         if len(candidates) == 0:
             summary.record_item(
