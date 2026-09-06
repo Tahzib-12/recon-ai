@@ -1,6 +1,7 @@
 """
 Unit and invariant tests for the deterministic reconciliation engine.
-Tests all scenarios using isolated pure in-memory fixtures.
+Tests all scenarios using isolated in-memory fixtures and verifies
+seamless integration with candidate scoring.
 """
 
 from datetime import datetime, timedelta, timezone
@@ -82,23 +83,26 @@ def create_refund(
 # ---------------------------------------------------------------------------
 
 
-
 def test_exact_transaction_id_match():
     payment = create_payment(amount="1000.00")
     settlement = create_settlement(amount="1000.00")
+
     summary = reconcile_records([payment], [settlement], [])
     assert summary.matched == 1
     assert summary.items[0].status == ReconStatus.MATCHED
     assert summary.items[0].reason_code == ReasonCode.EXACT_MATCH
     assert summary.items[0].matched_by == MatchedBy.EXACT_TRANSACTION_ID
 
+
 def test_exact_amount_match():
     payment = create_payment(amount="2500.50")
     settlement = create_settlement(amount="2500.50")
+
     summary = reconcile_records([payment], [settlement], [])
     assert summary.matched == 1
     assert summary.items[0].difference == Decimal("0.00")
-    
+
+
 def test_amount_mismatch():
     payment = create_payment(amount="1000.00")
     settlement = create_settlement(amount="971.00")
@@ -129,24 +133,34 @@ def test_orphan_settlement():
     assert summary.items[0].settlement_id == "SET001"
 
 
-def test_fallback_candidate_discovery_for_null_transaction_id():
+def test_fallback_candidate_scoring_when_transaction_id_is_null():
     payment = create_payment(amount="500.00")
-    # Settlement lacks transaction_id
     settlement = create_settlement(tx_id=None, amount="500.00")
 
     summary = reconcile_records([payment], [settlement], [])
     assert summary.matched == 1
     item = summary.items[0]
     assert item.status == ReconStatus.MATCHED
-    assert item.matched_by == MatchedBy.FALLBACK_CANDIDATE
+    assert item.matched_by == MatchedBy.SCORED_CANDIDATE
     assert item.settlement_id == "SET001"
+    assert len(item.candidate_scores) == 1
+    assert item.candidate_scores[0].total_score >= Decimal("0.85")
 
 
-def test_ambiguous_candidates():
+def test_ambiguous_fallback_candidates():
     payment = create_payment(tx_id="TXN_AMB", amount="5000.00")
-    # Two identical unlinked settlements within time window
-    set_a = create_settlement(set_id="SET_A", tx_id=None, amount="5000.00", timestamp=BASE_TIME + timedelta(minutes=4))
-    set_b = create_settlement(set_id="SET_B", tx_id=None, amount="5000.00", timestamp=BASE_TIME + timedelta(minutes=6))
+    set_a = create_settlement(
+        set_id="SET_A",
+        tx_id=None,
+        amount="5000.00",
+        timestamp=BASE_TIME + timedelta(minutes=4),
+    )
+    set_b = create_settlement(
+        set_id="SET_B",
+        tx_id=None,
+        amount="5000.00",
+        timestamp=BASE_TIME + timedelta(minutes=6),
+    )
 
     summary = reconcile_records([payment], [set_a, set_b], [])
     assert summary.ambiguous == 1
@@ -206,22 +220,26 @@ def test_partial_refund():
 
 def test_rounding_tolerance():
     payment = create_payment(amount="1000.00")
-    # Difference of 0.01 within default 0.01 tolerance
+
     set_tol = create_settlement(amount="999.99")
     summary = reconcile_records([payment], [set_tol], [])
     assert summary.matched_with_tolerance == 1
     assert summary.items[0].status == ReconStatus.MATCHED_WITH_TOLERANCE
 
-    # Difference of 0.02 exceeds tolerance
     set_exceed = create_settlement(amount="999.98")
     summary2 = reconcile_records([payment], [set_exceed], [])
     assert summary2.amount_mismatch == 1
     assert summary2.items[0].status == ReconStatus.AMOUNT_MISMATCH
 
 
-def test_determinism():
-    payments = [create_payment(tx_id=f"TX_{i}", amount=str(100 * i)) for i in range(1, 10)]
-    settlements = [create_settlement(set_id=f"SET_{i}", tx_id=f"TX_{i}", amount=str(100 * i)) for i in range(1, 10)]
+def test_determinism_repeated_execution():
+    payments = [
+        create_payment(tx_id=f"TX_{i}", amount=str(100 * i)) for i in range(1, 10)
+    ]
+    settlements = [
+        create_settlement(set_id=f"SET_{i}", tx_id=f"TX_{i}", amount=str(100 * i))
+        for i in range(1, 10)
+    ]
 
     run1 = reconcile_records(payments, settlements, [])
     run2 = reconcile_records(payments, settlements, [])
@@ -233,8 +251,6 @@ def test_determinism():
 
 
 def test_ground_truth_isolation():
-    # Verify module does not import or reference ground_truth.csv
-    import inspect
     from app.services import reconciliation
 
     source = inspect.getsource(reconciliation)
