@@ -12,6 +12,16 @@ from app.services.ingestion import (
     ingest_refunds,
     ingest_settlements,
 )
+from app.services.reconciliation import (
+    MatchedBy,
+    ReasonCode,
+    ReconciliationConfig,
+    ReconciliationItem,
+    ReconciliationSummary,
+    ReconStatus,
+    reconcile_records,
+    run_database_reconciliation,
+)
 
 __all__ = [
     "DuplicateRecordError",
