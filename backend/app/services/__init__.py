@@ -69,3 +69,18 @@ def __getattr__(name: str):
 
         return getattr(scoring, name)
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+from app.services.ai_investigator import AIInvestigator, InvestigationPolicy
+from app.services.evidence_builder import build_evidence_package
+from app.services.fake_investigator import FakeAIInvestigator
+from app.services.gemini_investigator import GeminiInvestigator
+from app.services.investigation_models import (
+    CandidateEvidence,
+    EvidencePackage,
+    InvestigationClassification,
+    InvestigationResult,
+    PaymentEvidence,
+    RecommendedAction,
+    RefundEvidence,
+    SettlementEvidence,
+)
+from app.services.investigation_orchestrator import investigate_exceptions
