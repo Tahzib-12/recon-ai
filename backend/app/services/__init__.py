@@ -53,6 +53,14 @@ __all__ = [
     "RefundEvidence",
     "SettlementEvidence",
     "investigate_exceptions",
+    "FinalResolution",
+    "FinalResolutionStatus",
+    "HumanReview",
+    "ReviewDecision",
+    "ReviewQueueItem",
+    "ReviewStatus",
+    "ReviewService",
+    "ReviewWorkflowError",
 ]
 
 
@@ -115,4 +123,17 @@ def __getattr__(name: str):
         from app.services import investigation_orchestrator
 
         return getattr(investigation_orchestrator, name)
+    if name in {
+        "FinalResolution",
+        "FinalResolutionStatus",
+        "HumanReview",
+        "ReviewDecision",
+        "ReviewQueueItem",
+        "ReviewStatus",
+    }:
+        from app.services import review_models
+        return getattr(review_models, name)
+    if name in {"ReviewService", "ReviewWorkflowError"}:
+        from app.services import review_service
+        return getattr(review_service, name)
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
