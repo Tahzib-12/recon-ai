@@ -39,6 +39,20 @@ __all__ = [
     "ScoringDecision",
     "evaluate_candidates",
     "score_candidate",
+    "AIInvestigator",
+    "InvestigationPolicy",
+    "build_evidence_package",
+    "FakeAIInvestigator",
+    "GeminiInvestigator",
+    "CandidateEvidence",
+    "EvidencePackage",
+    "InvestigationClassification",
+    "InvestigationResult",
+    "PaymentEvidence",
+    "RecommendedAction",
+    "RefundEvidence",
+    "SettlementEvidence",
+    "investigate_exceptions",
 ]
 
 
@@ -68,19 +82,37 @@ def __getattr__(name: str):
         from app.services import scoring
 
         return getattr(scoring, name)
+    if name in {
+        "CandidateEvidence",
+        "EvidencePackage",
+        "InvestigationClassification",
+        "InvestigationResult",
+        "PaymentEvidence",
+        "RecommendedAction",
+        "RefundEvidence",
+        "SettlementEvidence",
+    }:
+        from app.services import investigation_models
+
+        return getattr(investigation_models, name)
+    if name in {"AIInvestigator", "InvestigationPolicy"}:
+        from app.services import ai_investigator
+
+        return getattr(ai_investigator, name)
+    if name == "build_evidence_package":
+        from app.services import evidence_builder
+
+        return getattr(evidence_builder, name)
+    if name == "FakeAIInvestigator":
+        from app.services import fake_investigator
+
+        return getattr(fake_investigator, name)
+    if name == "GeminiInvestigator":
+        from app.services import gemini_investigator
+
+        return getattr(gemini_investigator, name)
+    if name == "investigate_exceptions":
+        from app.services import investigation_orchestrator
+
+        return getattr(investigation_orchestrator, name)
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
-from app.services.ai_investigator import AIInvestigator, InvestigationPolicy
-from app.services.evidence_builder import build_evidence_package
-from app.services.fake_investigator import FakeAIInvestigator
-from app.services.gemini_investigator import GeminiInvestigator
-from app.services.investigation_models import (
-    CandidateEvidence,
-    EvidencePackage,
-    InvestigationClassification,
-    InvestigationResult,
-    PaymentEvidence,
-    RecommendedAction,
-    RefundEvidence,
-    SettlementEvidence,
-)
-from app.services.investigation_orchestrator import investigate_exceptions
