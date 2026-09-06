@@ -151,3 +151,83 @@ class Refund(Base):
 # Indexes for multi-column candidate lookup efficiency during reconciliation
 Index("ix_payments_recon_lookup", Payment.merchant_id, Payment.currency, Payment.amount)
 Index("ix_settlements_recon_lookup", Settlement.merchant_id, Settlement.currency, Settlement.settled_amount)
+
+# Add to backend/app/db/models.py:
+
+class ReviewRecord(Base):
+    """
+    Persistence model for human verification decisions and workflow states.
+    Preserves audit trail of who reviewed, what was decided, and when.
+    """
+
+    __tablename__ = "reviews"
+
+    case_id: Mapped[str] = mapped_column(
+        String(100),
+        primary_key=True,
+        index=True,
+        doc="Identifier of the payment or settlement exception case.",
+    )
+    original_reconciliation_status: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        doc="Automated deterministic status that triggered the review.",
+    )
+    review_status: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        default="PENDING",
+        index=True,
+        doc="Workflow status: PENDING, IN_REVIEW, RESOLVED, ESCALATED.",
+    )
+    reviewer_id: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        index=True,
+        doc="Identifier or email of the investigator assigned/acting.",
+    )
+    decision: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+        doc="Human decision: APPROVE_MATCH, REJECT_MATCH, SELECT_SETTLEMENT, etc.",
+    )
+    selected_settlement_id: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        doc="Settlement ID manually bound by reviewer if applicable.",
+    )
+    final_resolution_status: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+        index=True,
+        doc="Derived final resolution: MATCH_CONFIRMED, MATCH_REJECTED, etc.",
+    )
+    notes: Mapped[Optional[str]] = mapped_column(
+        String(1000),
+        nullable=True,
+        doc="Investigator rationale and audit notes.",
+    )
+    ai_classification: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+        doc="Advisory AI classification from Commit 7.",
+    )
+    ai_recommended_action: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+        doc="Advisory AI recommendation from Commit 7.",
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+    decided_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
