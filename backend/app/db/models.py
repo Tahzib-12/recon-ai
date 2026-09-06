@@ -231,3 +231,72 @@ class ReviewRecord(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+    # Add to backend/app/db/models.py:
+
+class AuditEventRecord(Base):
+    """
+    Append-only persistent storage for reconciliation business audit events.
+    Guarantees immutable historical lineage of every system, AI, and human action.
+    """
+
+    __tablename__ = "audit_events"
+
+    event_id: Mapped[str] = mapped_column(
+        String(100),
+        primary_key=True,
+        index=True,
+        doc="Unique identifier for the audit event (UUID).",
+    )
+    case_id: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+        index=True,
+        doc="Identifier of the payment or settlement case.",
+    )
+    event_type: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        index=True,
+        doc="Type of business action (AuditEventType enum value).",
+    )
+    actor_type: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        doc="Actor classification: SYSTEM, AI, HUMAN.",
+    )
+    actor_id: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+        index=True,
+        doc="Specific actor identifier (e.g., 'reconciliation_engine', 'gemini-2.5-flash', 'alice@bank.com').",
+    )
+    description: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False,
+        doc="Human-readable summary of the event.",
+    )
+    previous_state: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+        doc="Previous status/state before transition.",
+    )
+    new_state: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+        doc="New status/state after transition.",
+    )
+    metadata_json: Mapped[Optional[str]] = mapped_column(
+        String(4000),
+        nullable=True,
+        doc="Serialized JSON dictionary containing structured event details.",
+    )
+    timestamp: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+        doc="UTC timestamp when the event occurred.",
+    )
+
+
+Index("ix_audit_events_case_timestamp", AuditEventRecord.case_id, AuditEventRecord.timestamp)
