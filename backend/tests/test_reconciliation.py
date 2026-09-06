@@ -5,6 +5,7 @@ Tests all scenarios using isolated pure in-memory fixtures.
 
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+import inspect
 import pytest
 
 from app.db.models import Payment, Refund, Settlement
@@ -81,17 +82,23 @@ def create_refund(
 # ---------------------------------------------------------------------------
 
 
-def test_exact_match():
+
+def test_exact_transaction_id_match():
     payment = create_payment(amount="1000.00")
     settlement = create_settlement(amount="1000.00")
-
     summary = reconcile_records([payment], [settlement], [])
     assert summary.matched == 1
     assert summary.items[0].status == ReconStatus.MATCHED
     assert summary.items[0].reason_code == ReasonCode.EXACT_MATCH
     assert summary.items[0].matched_by == MatchedBy.EXACT_TRANSACTION_ID
 
-
+def test_exact_amount_match():
+    payment = create_payment(amount="2500.50")
+    settlement = create_settlement(amount="2500.50")
+    summary = reconcile_records([payment], [settlement], [])
+    assert summary.matched == 1
+    assert summary.items[0].difference == Decimal("0.00")
+    
 def test_amount_mismatch():
     payment = create_payment(amount="1000.00")
     settlement = create_settlement(amount="971.00")
