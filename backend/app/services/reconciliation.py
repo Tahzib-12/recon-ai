@@ -238,25 +238,24 @@ def reconcile_records(
                     config=cfg.scoring_config,
                 )
                 candidate_scores = decision.ranked_candidates
-                # In backend/app/services/reconciliation.py:
-# When decision.is_ambiguous is True:
-            if decision.is_ambiguous:
-                cand_ids = [c.settlement_id for c in decision.ranked_candidates]
-                matched_settlement_ids.update(cand_ids)  # Claim candidates so reverse scan doesn't treat them as orphans
-                summary.record_item(
-                    ReconciliationItem(
-                        transaction_id=p.transaction_id,
-                        settlement_id=None,
-                        status=ReconStatus.AMBIGUOUS,
-                        reason_code=ReasonCode.MULTIPLE_CANDIDATES,
-                        matched_by=MatchedBy.NONE,
-                        payment_amount=p.amount,
-                        candidate_settlement_ids=cand_ids,
-                        candidate_scores=decision.ranked_candidates,
-                        notes=f"Candidate scoring evaluated {len(decision.ranked_candidates)} options: {decision.decision_reason}",
-                     )
-                )
-                continue
+
+                if decision.is_ambiguous:
+                    cand_ids = [c.settlement_id for c in decision.ranked_candidates]
+                    matched_settlement_ids.update(cand_ids)  # Claim candidates so reverse scan doesn't treat them as orphans
+                    summary.record_item(
+                        ReconciliationItem(
+                            transaction_id=p.transaction_id,
+                            settlement_id=None,
+                            status=ReconStatus.AMBIGUOUS,
+                            reason_code=ReasonCode.MULTIPLE_CANDIDATES,
+                            matched_by=MatchedBy.NONE,
+                            payment_amount=p.amount,
+                            candidate_settlement_ids=cand_ids,
+                            candidate_scores=decision.ranked_candidates,
+                            notes=f"Candidate scoring evaluated {len(decision.ranked_candidates)} options: {decision.decision_reason}",
+                        )
+                    )
+                    continue
 
                 if decision.is_acceptable and decision.best_candidate:
                     candidates = [decision.best_candidate.settlement]
