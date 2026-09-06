@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReconAI — Financial Reconciliation & Exception Investigator</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --text-bright: #f0f6fc;
+      --primary: #58a6ff;
+      --success: #3fb950;
+      --warning: #d29922;
+      --danger: #f85149;
+      --purple: #bc8cff;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; padding: 24px; }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
+    h1 { font-size: 20px; font-weight: 600; color: var(--text-bright); display: flex; align-items: center; gap: 8px; }
+    .badge { font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; text-transform: uppercase; }
+    .badge-success { background: rgba(63, 185, 80, 0.2); color: var(--success); }
+    .badge-warning { background: rgba(210, 153, 34, 0.2); color: var(--warning); }
+    .badge-danger { background: rgba(248, 81, 73, 0.2); color: var(--danger); }
+    .badge-purple { background: rgba(188, 140, 255, 0.2); color: var(--purple); }
+    .badge-blue { background: rgba(88, 166, 255, 0.2); color: var(--primary); }
+
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 16px; }
+    .card-title { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
+    .card-value { font-size: 28px; font-weight: 700; color: var(--text-bright); font-family: var(--font-mono); }
+    .card-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    .status-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+    .chip { background: var(--card-bg); border: 1px solid var(--border); border-radius: 4px; padding: 6px 12px; font-size: 12px; cursor: pointer; display: flex; gap: 6px; }
+    .chip.active { border-color: var(--primary); background: rgba(88, 166, 255, 0.1); }
+    .chip-count { font-weight: 700; font-family: var(--font-mono); }
+
+    .controls-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    input, select { background: var(--card-bg); border: 1px solid var(--border); color: var(--text-bright); padding: 8px 12px; border-radius: 4px; font-size: 13px; outline: none; }
+    input:focus, select:focus { border-color: var(--primary); }
+    input { flex-grow: 1; max-width: 320px; }
+
+    table { width: 100%; border-collapse: collapse; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+    th { background: #1f242c; font-weight: 600; color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
+    tr:hover td { background: #1c2129; cursor: pointer; }
+    .mono { font-family: var(--font-mono); font-size: 12px; }
+
+    /* Modal */
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; padding: 20px; }
+    .modal { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; width: 100%; max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+    .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+    .close-btn { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+    .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; background: var(--bg); padding: 14px; border-radius: 6px; border: 1px solid var(--border); }
+    .detail-item { font-size: 12px; }
+    .detail-label { color: var(--text-muted); text-transform: uppercase; font-size: 10px; font-weight: 600; }
+    .detail-val { font-family: var(--font-mono); font-size: 13px; color: var(--text-bright); margin-top: 2px; }
+
+    .panel { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 14px; }
+    .panel-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-bright); display: flex; align-items: center; gap: 8px; }
+
+    .timeline { display: flex; flex-direction: column; gap: 8px; position: relative; }
+    .timeline-item { border-left: 2px solid var(--primary); padding-left: 12px; position: relative; }
+    .timeline-item::before { content: ""; position: absolute; left: -5px; top: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+    .timeline-time { font-size: 10px; color: var(--text-muted); font-family: var(--font-mono); }
+    .timeline-desc { font-size: 12px; color: var(--text-bright); }
+    .timeline-actor { font-size: 11px; color: var(--primary); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1><span>⚡</span> ReconAI Operations Dashboard</h1>
+    <div>
+      <span class="badge badge-success">Production Ready</span>
+      <span class="badge badge-blue">Deterministic + AI Core</span>
+    </div>
+  </header>
+
+  <!-- High-Level Metrics -->
+  <div class="metrics-grid">
+    <div class="card">
+      <div class="card-title">Total Cases</div>
+      <div class="card-value" id="total-cases">-</div>
+      <div class="card-sub" id="totals-sub">-</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Match Rate</div>
+      <div class="card-value" id="match-rate">-</div>
+      <div class="card-sub">Exact &amp; Verified Matches</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Exceptions</div>
+      <div class="card-value" id="exception-cases" style="color: var(--warning);">-</div>
+      <div class="card-sub" id="exception-rate">-</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Pending Human Review</div>
+      <div class="card-value" id="pending-review" style="color: var(--purple);">-</div>
+      <div class="card-sub">Requires Analyst Sign-Off</div>
+    </div>
+  </div>
+
+  <!-- Status Filters -->
+  <div class="status-chips" id="status-chips">
+    <div class="chip active" onclick="filterByStatus('')">ALL <span class="chip-count" id="chip-ALL">0</span></div>
+  </div>
+
+  <!-- Search & Controls -->
+  <div class="controls-bar">
+    <input type="text" id="search-box" placeholder="Search Transaction ID..." oninput="onSearchChange()">
+    <select id="merchant-filter" onchange="loadCases()">
+      <option value="">All Merchants</option>
+      <option value="MER001">MER001</option>
+      <option value="MER002">MER002</option>
+      <option value="MER003">MER003</option>
+      <option value="MER004">MER004</option>
+      <option value="MER005">MER005</option>
+    </select>
+    <select id="currency-filter" onchange="loadCases()">
+      <option value="">All Currencies</option>
+      <option value="INR">INR</option>
+      <option value="USD">USD</option>
+      <option value="EUR">EUR</option>
+    </select>
+  </div>
+
+  <!-- Cases Table -->
+  <table>
+    <thead>
+      <tr>
+        <th>Case / Txn ID</th>
+        <th>Status</th>
+        <th>Amount</th>
+        <th>Settled</th>
+        <th>Diff</th>
+        <th>Merchant</th>
+        <th>Candidates</th>
+        <th>Review</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="cases-body">
+      <tr><td colspan="9" style="text-align: center; color: var(--text-muted);">Loading reconciliation data...</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Drill-Down Modal -->
+  <div class="modal-backdrop" id="modal-backdrop" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2 id="modal-title" style="font-size: 16px;">Case Details</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Summary Grid -->
+        <div class="detail-grid" id="modal-grid"></div>
+
+        <!-- Candidate Evidence Panel -->
+        <div class="panel" id="modal-candidates-panel" style="display: none;">
+          <div class="panel-title"><span>🎯</span> Scored Candidates (Evidence Breakdown)</div>
+          <div id="modal-candidates-list"></div>
+        </div>
+
+        <!-- AI Investigation Panel -->
+        <div class="panel" id="modal-ai-panel" style="display: none;">
+          <div class="panel-title"><span>🤖</span> AI Investigation Finding (<span id="modal-ai-model"></span>)</div>
+          <div id="modal-ai-content" style="font-size: 13px; display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+
+        <!-- Human Review Panel -->
+        <div class="panel" id="modal-review-panel" style="display: none;">
+          <div class="panel-title"><span>👤</span> Human Verification &amp; Override</div>
+          <div id="modal-review-content" style="font-size: 13px;"></div>
+        </div>
+
+        <!-- Chronological Audit Timeline -->
+        <div class="panel">
+          <div class="panel-title"><span>📜</span> Chronological Audit Trail</div>
+          <div class="timeline" id="modal-audit-timeline"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentStatusFilter = '';
+    let searchTimeout = null;
+
+    async function loadSummary() {
+      const res = await fetch('/api/dashboard/summary');
+      const data = await res.json();
+
+      document.getElementById('total-cases').innerText = data.total_cases;
+      document.getElementById('totals-sub').innerText = `${data.total_payments} P | ${data.total_settlements} S | ${data.total_refunds} R`;
+      document.getElementById('match-rate').innerText = `${data.match_rate_pct}%`;
+      document.getElementById('exception-cases').innerText = data.exception_cases;
+      document.getElementById('exception-rate').innerText = `${data.exception_rate_pct}% of cases`;
+
+      const counts = data.status_counts;
+      const chipsContainer = document.getElementById('status-chips');
+      chipsContainer.innerHTML = `<div class="chip ${currentStatusFilter === '' ? 'active' : ''}" onclick="filterByStatus('')">ALL <span class="chip-count">${data.total_cases}</span></div>`;
+
+      let pendingReviews = 0;
+      for (const [st, count] of Object.entries(counts)) {
+        if (st !== 'MATCHED' && st !== 'MATCHED_WITH_TOLERANCE' && st !== 'REFUNDED') pendingReviews += count;
+        chipsContainer.innerHTML += `<div class="chip ${currentStatusFilter === st ? 'active' : ''}" onclick="filterByStatus('${st}')">${st} <span class="chip-count">${count}</span></div>`;
+      }
+      document.getElementById('pending-review').innerText = pendingReviews;
+    }
+
+    async function loadCases() {
+      const search = document.getElementById('search-box').value.trim();
+      const merchant = document.getElementById('merchant-filter').value;
+      const currency = document.getElementById('currency-filter').value;
+
+      let url = `/api/dashboard/cases?limit=100`;
+      if (currentStatusFilter) url += `&status=${encodeURIComponent(currentStatusFilter)}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (merchant) url += `&merchant_id=${encodeURIComponent(merchant)}`;
+      if (currency) url += `&currency=${encodeURIComponent(currency)}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+      const tbody = document.getElementById('cases-body');
+
+      if (data.cases.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 20px;">No reconciliation cases match the criteria.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = data.cases.map(c => `
+        <tr onclick="openCaseDetail('${c.case_id}')">
+          <td class="mono" style="font-weight: 600; color: var(--primary);">${c.case_id}</td>
+          <td>${getStatusBadge(c.reconciliation_status)}</td>
+          <td class="mono">${c.payment_amount ? '₹' + c.payment_amount : '-'}</td>
+          <td class="mono">${c.settled_amount ? '₹' + c.settled_amount : '-'}</td>
+          <td class="mono" style="color: ${c.difference && c.difference !== '0.00' ? 'var(--danger)' : 'var(--text-muted)'}">${c.difference ? '₹' + c.difference : '-'}</td>
+          <td class="mono">${c.merchant_id || '-'}</td>
+          <td>${c.candidate_count > 0 ? `<span class="badge badge-purple">${c.candidate_count} Candidates</span>` : '-'}</td>
+          <td><span class="badge ${c.review_status === 'RESOLVED' ? 'badge-success' : 'badge-warning'}">${c.review_status}</span></td>
+          <td><button style="background: var(--border); border: none; color: var(--text-bright); padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Inspect</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function getStatusBadge(st) {
+      if (st === 'MATCHED' || st === 'MATCHED_WITH_TOLERANCE' || st === 'REFUNDED') return `<span class="badge badge-success">${st}</span>`;
+      if (st === 'AMBIGUOUS' || st === 'DUPLICATE_SETTLEMENT') return `<span class="badge badge-purple">${st}</span>`;
+      return `<span class="badge badge-danger">${st}</span>`;
+    }
+
+    function filterByStatus(st) {
+      currentStatusFilter = st;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      loadCases();
+    }
+
+    function onSearchChange() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(loadCases, 300);
+    }
+
+    async function openCaseDetail(caseId) {
+      const res = await fetch(`/api/dashboard/cases/${encodeURIComponent(caseId)}`);
+      if (!res.ok) return alert('Case detail not found.');
+      const data = await res.json();
+
+      document.getElementById('modal-title').innerText = `Case: ${data.case_id}`;
+
+      // Summary grid
+      document.getElementById('modal-grid').innerHTML = `
+        <div class="detail-item"><div class="detail-label">Status</div><div class="detail-val">${getStatusBadge(data.reconciliation_status)}</div></div>
+        <div class="detail-item"><div class="detail-label">Reason Code</div><div class="detail-val">${data.reason_code}</div></div>
+        <div class="detail-item"><div class="detail-label">Matched By</div><div class="detail-val">${data.matched_by}</div></div>
+        <div class="detail-item"><div class="detail-label">Payment Amount</div><div class="detail-val">${data.payment_amount ? '₹' + data.payment_amount : 'N/A'}</div></div>
+        <div class="detail-item"><div class="detail-label">Settled Amount</div><div class="detail-val">${data.settled_amount ? '₹' + data.settled_amount : 'N/A'}</div></div>
+        <div class="detail-item"><div class="detail-label">Difference</div><div class="detail-val" style="color: var(--danger);">${data.difference ? '₹' + data.difference : '0.00'}</div></div>
+        <div class="detail-item"><div class="detail-label">Merchant ID</div><div class="detail-val">${data.payment ? data.payment.merchant_id : (data.settlement ? data.settlement.merchant_id : 'N/A')}</div></div>
+        <div class="detail-item"><div class="detail-label">Customer ID</div><div class="detail-val">${data.payment ? data.payment.customer_id : 'N/A'}</div></div>
+        <div class="detail-item"><div class="detail-label">Payment Method</div><div class="detail-val">${data.payment ? data.payment.payment_method : 'N/A'}</div></div>
+      `;
+
+      // Candidate scores
+      const candPanel = document.getElementById('modal-candidates-panel');
+      if (data.candidates && data.candidates.length > 0) {
+        candPanel.style.display = 'block';
+        document.getElementById('modal-candidates-list').innerHTML = data.candidates.map(c => `
+          <div style="background: var(--card-bg); padding: 10px; border-radius: 4px; border: 1px solid var(--border); margin-bottom: 8px; font-size: 12px;">
+            <div style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-bright);">
+              <span class="mono">${c.settlement_id}</span>
+              <span style="color: var(--primary);">Score: ${c.total_score}</span>
+            </div>
+            <div style="color: var(--text-muted); font-size: 11px; margin-top: 4px;">
+              Amount Score: ${c.amount_score} | Merchant: ${c.merchant_score} | Currency: ${c.currency_score} | Time Proximity: ${c.timestamp_score}
+            </div>
+          </div>
+        `).join('');
+      } else {
+        candPanel.style.display = 'none';
+      }
+
+      // AI Panel
+      const aiPanel = document.getElementById('modal-ai-panel');
+      if (data.ai_investigation) {
+        aiPanel.style.display = 'block';
+        document.getElementById('modal-ai-model').innerText = data.ai_investigation.investigator_model;
+        document.getElementById('modal-ai-content').innerHTML = `
+          <div><strong>Classification:</strong> <span class="badge badge-purple">${data.ai_investigation.classification}</span></div>
+          <div><strong>Recommendation:</strong> <span class="badge badge-blue">${data.ai_investigation.recommended_action}</span></div>
+          <div style="background: var(--card-bg); padding: 8px; border-radius: 4px; border-left: 3px solid var(--purple);">${data.ai_investigation.summary}</div>
+          <div style="font-size: 11px; color: var(--text-muted);"><strong>Facts:</strong> ${data.ai_investigation.observed_facts.join('; ')}</div>
+        `;
+      } else {
+        aiPanel.style.display = 'none';
+      }
+
+      // Review Panel
+      const revPanel = document.getElementById('modal-review-panel');
+      if (data.human_review) {
+        revPanel.style.display = 'block';
+        document.getElementById('modal-review-content').innerHTML = `
+          <div><strong>Review Status:</strong> <span class="badge badge-warning">${data.human_review.review_status}</span></div>
+          <div><strong>Reviewer:</strong> ${data.human_review.reviewer_id || 'Unassigned'}</div>
+          <div><strong>Decision:</strong> ${data.human_review.decision || 'Pending'}</div>
+          <div><strong>Final Resolution:</strong> ${data.human_review.final_resolution_status || 'In Progress'}</div>
+          <div><strong>Notes:</strong> ${data.human_review.notes || 'None'}</div>
+        `;
+      } else {
+        revPanel.style.display = 'none';
+      }
+
+      // Audit Timeline
+      const timelineDiv = document.getElementById('modal-audit-timeline');
+      if (data.audit_timeline && data.audit_timeline.length > 0) {
+        timelineDiv.innerHTML = data.audit_timeline.map(ev => `
+          <div class="timeline-item">
+            <div class="timeline-time">${ev.timestamp}</div>
+            <div class="timeline-actor">[${ev.actor_type}] ${ev.actor_id}</div>
+            <div class="timeline-desc"><strong>${ev.event_type}</strong>: ${ev.description}</div>
+          </div>
+        `).join('');
+      } else {
+        timelineDiv.innerHTML = `<div style="color: var(--text-muted); font-size: 12px;">No audit events recorded for this case.</div>`;
+      }
+
+      document.getElementById('modal-backdrop').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modal-backdrop').style.display = 'none';
+    }
+
+    // Initialize
+    loadSummary();
+    loadCases();
+  </script>
+</body>
+</html>
