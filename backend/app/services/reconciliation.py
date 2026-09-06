@@ -1,8 +1,9 @@
 """
-ReconAI - Deterministic Reconciliation Engine.
+ReconAI - Deterministic Reconciliation Engine with Candidate Scoring Integration.
 
 Implements pure, explainable, rule-based reconciliation between payments,
-settlements, and refunds without using AI or external services.
+settlements, and refunds. Integrates deterministic candidate scoring for
+unlinked and fallback settlement matching.
 """
 
 from __future__ import annotations
@@ -17,6 +18,12 @@ from typing import Optional, Sequence
 from sqlalchemy.orm import Session
 
 from app.db.models import Payment, Refund, Settlement
+from app.services.scoring import (
+    CandidateScoringConfig,
+    CandidateScore,
+    ScoringDecision,
+    evaluate_candidates,
+)
 
 # ---------------------------------------------------------------------------
 # Enums and Taxonomy
@@ -47,7 +54,8 @@ class ReasonCode(str, Enum):
     EXACT_ID_AMOUNT_DIFFERENCE = "EXACT_ID_AMOUNT_DIFFERENCE"
     NO_SETTLEMENT_FOUND = "NO_SETTLEMENT_FOUND"
     NO_PAYMENT_FOUND = "NO_PAYMENT_FOUND"
-    FALLBACK_SINGLE_CANDIDATE = "FALLBACK_SINGLE_CANDIDATE"
+    SCORED_SINGLE_CANDIDATE = "SCORED_SINGLE_CANDIDATE"
+    SCORED_DECISIVE_WINNER = "SCORED_DECISIVE_WINNER"
     MULTIPLE_CANDIDATES = "MULTIPLE_CANDIDATES"
     MULTIPLE_EXACT_ID_SETTLEMENTS = "MULTIPLE_EXACT_ID_SETTLEMENTS"
     PARTIAL_SETTLEMENT_DETECTED = "PARTIAL_SETTLEMENT_DETECTED"
@@ -57,9 +65,10 @@ class ReasonCode(str, Enum):
 
 
 class MatchedBy(str, Enum):
-    """Identifies the heuristic or rule layer that resolved the link."""
+    """Identifies the rule layer that resolved the link."""
 
     EXACT_TRANSACTION_ID = "EXACT_TRANSACTION_ID"
+    SCORED_CANDIDATE = "SCORED_CANDIDATE"
     FALLBACK_CANDIDATE = "FALLBACK_CANDIDATE"
     NONE = "NONE"
 
@@ -73,9 +82,9 @@ class MatchedBy(str, Enum):
 class ReconciliationConfig:
     """Centralized configuration parameters for deterministic rules."""
 
-    amount_tolerance: Decimal = Decimal("0.01")  # Maximum allowed penny/paisa rounding diff
-    fallback_time_window: timedelta = timedelta(days=2)  # Window for unlinked candidate search
-    fallback_amount_tolerance: Decimal = Decimal("0.00")  # Strict amount match for candidate search
+    amount_tolerance: Decimal = Decimal("0.01")
+    fallback_time_window: timedelta = timedelta(days=3)
+    scoring_config: CandidateScoringConfig = field(default_factory=CandidateScoringConfig)
 
 
 @dataclass
@@ -92,6 +101,7 @@ class ReconciliationItem:
     difference: Optional[Decimal] = None
     candidate_settlement_ids: list[str] = field(default_factory=list)
     refund_ids: list[str] = field(default_factory=list)
+    candidate_scores: list[CandidateScore] = field(default_factory=list)
     notes: Optional[str] = None
 
 
@@ -154,40 +164,40 @@ def reconcile_records(
     config: Optional[ReconciliationConfig] = None,
 ) -> ReconciliationSummary:
     """
-    Pure deterministic reconciliation algorithm.
+    Pure deterministic reconciliation algorithm integrating candidate scoring.
 
     Executes in O(P + S + R) time using in-memory hash indexes.
-    Does not read from or write to the database.
     """
     cfg = config or ReconciliationConfig()
+
+    sorted_payments = sorted(payments, key=lambda p: p.transaction_id)
+    sorted_settlements = sorted(settlements, key=lambda s: s.settlement_id)
+    sorted_refunds = sorted(refunds, key=lambda r: r.refund_id)
+
     summary = ReconciliationSummary(
-        total_payments=len(payments),
-        total_settlements=len(settlements),
-        total_refunds=len(refunds),
+        total_payments=len(sorted_payments),
+        total_settlements=len(sorted_settlements),
+        total_refunds=len(sorted_refunds),
     )
 
     # 1. Build In-Memory Hash Indexes
-    # Fast lookup for exact matches
     settlements_by_tx: dict[str, list[Settlement]] = defaultdict(list)
-    # Group unlinked settlements (where transaction_id is None or empty)
     unlinked_settlements: dict[tuple[str, str], list[Settlement]] = defaultdict(list)
 
-    for s in settlements:
+    for s in sorted_settlements:
         if s.transaction_id:
             settlements_by_tx[s.transaction_id].append(s)
         else:
             unlinked_settlements[(s.merchant_id, s.currency)].append(s)
 
-    # Index refunds by transaction_id
     refunds_by_tx: dict[str, list[Refund]] = defaultdict(list)
-    for r in refunds:
+    for r in sorted_refunds:
         refunds_by_tx[r.transaction_id].append(r)
 
-    # Track settlements that have been associated with a payment
     matched_settlement_ids: set[str] = set()
 
     # 2. Forward Pass: Reconcile Payments
-    for p in payments:
+    for p in sorted_payments:
         # Special Case: Inconclusive gateway status -> UNRESOLVED
         if p.payment_status == "PENDING_GATEWAY_RESPONSE":
             summary.record_item(
@@ -203,43 +213,56 @@ def reconcile_records(
             )
             continue
 
-        # Stage 1: Exact transaction_id matching
+        # Level 1: Exact transaction_id matching
         exact_candidates = settlements_by_tx.get(p.transaction_id, [])
 
-        # Stage 2: Fallback Candidate Discovery if no exact match
         matched_by = MatchedBy.EXACT_TRANSACTION_ID
         candidates = exact_candidates
+        candidate_scores: list[CandidateScore] = []
 
+        # Level 2 & 3: Fallback Candidate Scoring if no exact match
         if not candidates:
-            # Look in unlinked pool for matching merchant, currency, amount within time window
             potential = unlinked_settlements.get((p.merchant_id, p.currency), [])
-            matching_unlinked = [
+            unclaimed_pool = [
                 s
                 for s in potential
-                if abs(s.settled_amount - p.amount) <= cfg.fallback_amount_tolerance
+                if s.settlement_id not in matched_settlement_ids
                 and abs(s.settlement_timestamp - p.payment_timestamp) <= cfg.fallback_time_window
-                and s.settlement_id not in matched_settlement_ids
             ]
 
-            if len(matching_unlinked) == 1:
-                candidates = matching_unlinked
-                matched_by = MatchedBy.FALLBACK_CANDIDATE
-            elif len(matching_unlinked) > 1:
-                summary.record_item(
-                    ReconciliationItem(
-                        transaction_id=p.transaction_id,
-                        settlement_id=None,
-                        status=ReconStatus.AMBIGUOUS,
-                        reason_code=ReasonCode.MULTIPLE_CANDIDATES,
-                        matched_by=MatchedBy.NONE,
-                        payment_amount=p.amount,
-                        candidate_settlement_ids=[s.settlement_id for s in matching_unlinked],
-                        notes=f"Found {len(matching_unlinked)} equally plausible unlinked settlement candidates.",
-                    )
+            if unclaimed_pool:
+                decision: ScoringDecision = evaluate_candidates(
+                    payment=p,
+                    candidates=unclaimed_pool,
+                    config=cfg.scoring_config,
                 )
-                continue
+                candidate_scores = decision.ranked_candidates
 
-        # Stage 3: Candidate Count Evaluation
+                if decision.is_ambiguous:
+                    summary.record_item(
+                        ReconciliationItem(
+                            transaction_id=p.transaction_id,
+                            settlement_id=None,
+                            status=ReconStatus.AMBIGUOUS,
+                            reason_code=ReasonCode.MULTIPLE_CANDIDATES,
+                            matched_by=MatchedBy.NONE,
+                            payment_amount=p.amount,
+                            candidate_settlement_ids=[
+                                c.settlement_id for c in decision.ranked_candidates
+                            ],
+                            candidate_scores=decision.ranked_candidates,
+                            notes=f"Candidate scoring evaluated {len(decision.ranked_candidates)} options: {decision.decision_reason}",
+                        )
+                    )
+                    continue
+
+                if decision.is_acceptable and decision.best_candidate:
+                    candidates = [decision.best_candidate.settlement]
+                    matched_by = MatchedBy.SCORED_CANDIDATE
+                else:
+                    candidates = []
+
+        # Missing Settlement Check
         if len(candidates) == 0:
             summary.record_item(
                 ReconciliationItem(
@@ -249,13 +272,14 @@ def reconcile_records(
                     reason_code=ReasonCode.NO_SETTLEMENT_FOUND,
                     matched_by=MatchedBy.NONE,
                     payment_amount=p.amount,
-                    notes="No settlement record found with matching transaction ID or attributes.",
+                    candidate_scores=candidate_scores,
+                    notes="No settlement record found with matching transaction ID or qualifying candidate score.",
                 )
             )
             continue
 
+        # Duplicate Settlement Check
         if len(candidates) > 1:
-            # Duplicate settlements referencing the same payment ID
             cand_ids = [s.settlement_id for s in candidates]
             matched_settlement_ids.update(cand_ids)
             summary.record_item(
@@ -280,7 +304,11 @@ def reconcile_records(
         # Check Refund Lifecycle
         related_refunds = refunds_by_tx.get(p.transaction_id, [])
         refund_ids = [r.refund_id for r in related_refunds]
-        total_refunded = sum(r.refund_amount for r in related_refunds) if related_refunds else Decimal("0.00")
+        total_refunded = (
+            sum(r.refund_amount for r in related_refunds)
+            if related_refunds
+            else Decimal("0.00")
+        )
 
         if total_refunded > Decimal("0.00"):
             if total_refunded == p.amount:
@@ -295,6 +323,7 @@ def reconcile_records(
                         settled_amount=settlement.settled_amount,
                         difference=diff,
                         refund_ids=refund_ids,
+                        candidate_scores=candidate_scores,
                         notes=f"Full refund of {total_refunded} recorded. Net position zeroed.",
                     )
                 )
@@ -310,23 +339,31 @@ def reconcile_records(
                         settled_amount=settlement.settled_amount,
                         difference=diff,
                         refund_ids=refund_ids,
+                        candidate_scores=candidate_scores,
                         notes=f"Partial refund of {total_refunded} recorded against payment of {p.amount}.",
                     )
                 )
             continue
 
         # Amount & Tolerance Evaluation
+        reason = (
+            ReasonCode.SCORED_DECISIVE_WINNER
+            if matched_by == MatchedBy.SCORED_CANDIDATE
+            else ReasonCode.EXACT_MATCH
+        )
+
         if diff == Decimal("0.00"):
             summary.record_item(
                 ReconciliationItem(
                     transaction_id=p.transaction_id,
                     settlement_id=settlement.settlement_id,
                     status=ReconStatus.MATCHED,
-                    reason_code=ReasonCode.EXACT_MATCH,
+                    reason_code=reason,
                     matched_by=matched_by,
                     payment_amount=p.amount,
                     settled_amount=settlement.settled_amount,
                     difference=diff,
+                    candidate_scores=candidate_scores,
                 )
             )
         elif abs(diff) <= cfg.amount_tolerance:
@@ -340,6 +377,7 @@ def reconcile_records(
                     payment_amount=p.amount,
                     settled_amount=settlement.settled_amount,
                     difference=diff,
+                    candidate_scores=candidate_scores,
                     notes=f"Difference of {diff} is within allowed tolerance of {cfg.amount_tolerance}.",
                 )
             )
@@ -354,11 +392,11 @@ def reconcile_records(
                     payment_amount=p.amount,
                     settled_amount=settlement.settled_amount,
                     difference=diff,
+                    candidate_scores=candidate_scores,
                     notes=f"Explicit partial settlement payout: {settlement.settled_amount} of {p.amount}.",
                 )
             )
         else:
-            # Deterministic detection of amount mismatch (could be fees, adjustments, or errors)
             summary.record_item(
                 ReconciliationItem(
                     transaction_id=p.transaction_id,
@@ -369,12 +407,13 @@ def reconcile_records(
                     payment_amount=p.amount,
                     settled_amount=settlement.settled_amount,
                     difference=diff,
+                    candidate_scores=candidate_scores,
                     notes=f"Amount difference of {diff} detected. Source records lack explicit fee breakdown.",
                 )
             )
 
     # 3. Reverse Pass: Identify Orphan Settlements
-    for s in settlements:
+    for s in sorted_settlements:
         if s.settlement_id not in matched_settlement_ids:
             summary.record_item(
                 ReconciliationItem(
@@ -399,9 +438,7 @@ def reconcile_records(
 def run_database_reconciliation(
     session: Session, config: Optional[ReconciliationConfig] = None
 ) -> ReconciliationSummary:
-    """
-    Loads all records from the database session and runs deterministic reconciliation.
-    """
+    """Loads all records from database session and runs deterministic reconciliation."""
     payments = session.query(Payment).all()
     settlements = session.query(Settlement).all()
     refunds = session.query(Refund).all()
@@ -420,21 +457,21 @@ def main() -> None:
         print("==================================================")
         print("ReconAI - Deterministic Reconciliation Summary")
         print("==================================================")
-        print(f"Total Payments Analyzed:    {summary.total_payments:>5}")
-        print(f"Total Settlements Analyzed: {summary.total_settlements:>5}")
-        print(f"Total Refunds Analyzed:     {summary.total_refunds:>5}")
+        print(f"Total Payments Analyzed:      {summary.total_payments:>5}")
+        print(f"Total Settlements Analyzed:   {summary.total_settlements:>5}")
+        print(f"Total Refunds Analyzed:       {summary.total_refunds:>5}")
         print("--------------------------------------------------")
-        print(f"MATCHED:                    {summary.matched:>5}")
-        print(f"MATCHED_WITH_TOLERANCE:     {summary.matched_with_tolerance:>5}")
-        print(f"AMOUNT_MISMATCH:            {summary.amount_mismatch:>5}")
-        print(f"MISSING_SETTLEMENT:         {summary.missing_settlement:>5}")
-        print(f"ORPHAN_SETTLEMENT:          {summary.orphan_settlement:>5}")
-        print(f"AMBIGUOUS:                  {summary.ambiguous:>5}")
-        print(f"DUPLICATE_SETTLEMENT:       {summary.duplicate_settlement:>5}")
-        print(f"PARTIAL_SETTLEMENT:         {summary.partial_settlement:>5}")
-        print(f"REFUNDED:                   {summary.refunded:>5}")
-        print(f"PARTIALLY_REFUNDED:         {summary.partially_refunded:>5}")
-        print(f"UNRESOLVED:                 {summary.unresolved:>5}")
+        print(f"MATCHED:                      {summary.matched:>5}")
+        print(f"MATCHED_WITH_TOLERANCE:       {summary.matched_with_tolerance:>5}")
+        print(f"AMOUNT_MISMATCH:              {summary.amount_mismatch:>5}")
+        print(f"MISSING_SETTLEMENT:           {summary.missing_settlement:>5}")
+        print(f"ORPHAN_SETTLEMENT:            {summary.orphan_settlement:>5}")
+        print(f"AMBIGUOUS:                    {summary.ambiguous:>5}")
+        print(f"DUPLICATE_SETTLEMENT:         {summary.duplicate_settlement:>5}")
+        print(f"PARTIAL_SETTLEMENT:           {summary.partial_settlement:>5}")
+        print(f"REFUNDED:                     {summary.refunded:>5}")
+        print(f"PARTIALLY_REFUNDED:           {summary.partially_refunded:>5}")
+        print(f"UNRESOLVED:                   {summary.unresolved:>5}")
         print("==================================================")
     finally:
         session.close()
