@@ -23,6 +23,8 @@ from app.services.review_models import (
     ReviewQueueItem,
     ReviewStatus,
 )
+from app.services.audit_models import ActorType, AuditEventType
+from app.services.audit_service import AuditService
 
 
 class ReviewWorkflowError(Exception):
@@ -69,6 +71,22 @@ class ReviewService:
             session.merge(db_record)
             session.commit()
 
+            # Record REVIEW_CREATED audit event
+            AuditService.record_event(
+                case_id=review.case_id,
+                event_type=AuditEventType.REVIEW_CREATED,
+                actor_type=ActorType.SYSTEM,
+                actor_id="review_service",
+                description=f"Human verification case created for {review.original_reconciliation_status.value}.",
+                previous_state=review.original_reconciliation_status.value,
+                new_state=ReviewStatus.PENDING.value,
+                metadata={
+                    "ai_classification": review.ai_classification.value if review.ai_classification else None,
+                    "ai_recommended_action": review.ai_recommended_action.value if review.ai_recommended_action else None,
+                },
+                session=session,
+            )
+
         return review
 
     @staticmethod
@@ -96,6 +114,17 @@ class ReviewService:
                 db_record.updated_at = review.updated_at
                 session.commit()
 
+            # Record REVIEW_ASSIGNED audit event
+            AuditService.record_event(
+                case_id=review.case_id,
+                event_type=AuditEventType.REVIEW_ASSIGNED,
+                actor_type=ActorType.HUMAN,
+                actor_id=review.reviewer_id,
+                description=f"Case assigned to investigator {review.reviewer_id}.",
+                previous_state=ReviewStatus.PENDING.value,
+                new_state=ReviewStatus.IN_REVIEW.value,
+                session=session,
+            )   
         return review
 
     @staticmethod
@@ -170,7 +199,29 @@ class ReviewService:
                 db_record.decided_at = review.decided_at
                 db_record.updated_at = review.updated_at
                 session.commit()
-
+            # Map decision to corresponding audit event type
+            event_type_map = {
+                ReviewDecision.APPROVE_MATCH: AuditEventType.REVIEW_APPROVED,
+                ReviewDecision.REJECT_MATCH: AuditEventType.REVIEW_REJECTED,
+                ReviewDecision.SELECT_SETTLEMENT: AuditEventType.SETTLEMENT_SELECTED,
+                ReviewDecision.MARK_UNRESOLVED: AuditEventType.CASE_RESOLVED,
+                ReviewDecision.ESCALATE: AuditEventType.CASE_ESCALATED,
+            }
+            AuditService.record_event(
+                case_id=review.case_id,
+                event_type=event_type_map[decision],
+                actor_type=ActorType.HUMAN,
+                actor_id=review.reviewer_id,
+                description=f"Human reviewer applied decision: {decision.value}.",
+                previous_state=ReviewStatus.IN_REVIEW.value,
+                new_state=review.review_status.value,
+                metadata={
+                    "final_resolution": final_status.value,
+                    "selected_settlement_id": review.selected_settlement_id,
+                    "notes": review.notes,
+                },
+                session=session,
+            )
         return review
 
     @staticmethod

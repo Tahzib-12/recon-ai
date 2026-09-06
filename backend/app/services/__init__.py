@@ -61,6 +61,10 @@ __all__ = [
     "ReviewStatus",
     "ReviewService",
     "ReviewWorkflowError",
+     "ActorType",
+    "AuditEvent",
+    "AuditEventType",
+    "AuditService",
 ]
 
 
@@ -132,8 +136,18 @@ def __getattr__(name: str):
         "ReviewStatus",
     }:
         from app.services import review_models
+
         return getattr(review_models, name)
     if name in {"ReviewService", "ReviewWorkflowError"}:
         from app.services import review_service
+
         return getattr(review_service, name)
+    if name in {"ActorType", "AuditEvent", "AuditEventType"}:
+        from app.services import audit_models
+
+        return getattr(audit_models, name)
+    if name == "AuditService":
+        from app.services import audit_service
+
+        return getattr(audit_service, name)
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
