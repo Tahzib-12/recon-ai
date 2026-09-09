@@ -6,6 +6,7 @@ candidate evidence display, AI integration, audit history, and error handling.
 
 from decimal import Decimal
 import pytest
+from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -19,7 +20,11 @@ from app.services.audit_service import AuditService
 
 @pytest.fixture
 def test_db():
-    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    engine = create_engine(
+    "sqlite://",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
     Base.metadata.create_all(bind=engine)
     Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
     session = Session()
